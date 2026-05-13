@@ -25,6 +25,7 @@ export const CONFIG = {
   EVAPORATION_RATE_FOOD: 0.997,    // Blue persists longer (navigation anchor)
   DROPOFF_RATE_FORAGING: 0.1,    // Enough to see exploration paths
   DROPOFF_RATE_RETURNING: 0.3,   // Strong trail for navigation
+  PHEROMONE_AMEPLIFICATION: 1.2, // Stacking bonus (1.2 = 20% boost per layer)
   TRAIL_STRENGTH: 6,              // Stronger amplification of trail signals
   MIN_PHEROMONE: 0.0,
   MAX_PHEROMONE: 1.0,

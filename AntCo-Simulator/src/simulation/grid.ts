@@ -71,7 +71,12 @@ export function deposit(
   if (gx < 0 || gx >= grid.width || gy < 0 || gy >= grid.height) return;
   const idx = index(grid, gx, gy);
   const buffer = type === 'home' ? grid.home : grid.food;
-  buffer[idx] = Math.min(CONFIG.MAX_PHEROMONE, buffer[idx] + amount);
+
+  // Amplify: if cell already has pheromone of same type, existing level boosts new deposit
+  // This creates positive feedback: stronger trails attract more ants → stronger trails
+  const existing = buffer[idx];
+  const boosted = amount * (1 + CONFIG.PHEROMONE_AMPLIFICATION * existing);
+  buffer[idx] = Math.min(CONFIG.MAX_PHEROMONE, existing + boosted);
 }
 
 export function sample(
