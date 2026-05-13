@@ -22,7 +22,8 @@ export const CONFIG = {
 
   // Pheromones
   EVAPORATION_RATE: 0.992,    // Faster evaporation to clear noise
-  DROPOFF_RATE: 0.15,         // Lower drop rate - less background noise
+  DROPOFF_RATE_FORAGING: 0.02, // Barely drops while wandering (less noise)
+  DROPOFF_RATE_RETURNING: 0.4, // Strong return trail so ants can follow
   TRAIL_STRENGTH: 5,
   MIN_PHEROMONE: 0.0,
   MAX_PHEROMONE: 1.0,

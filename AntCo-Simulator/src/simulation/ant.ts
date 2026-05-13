@@ -108,12 +108,17 @@ export function updateAnt(
   ant.y += moveY;
 
   // Drop pheromone behind ant
+  // Returning ants leave strong trails, foraging ants barely drop anything
+  // (random wandering trails just create noise and confusion)
+  const dropAmount = ant.hasFood
+    ? CONFIG.DROPOFF_RATE_RETURNING
+    : CONFIG.DROPOFF_RATE_FORAGING;
   grid.deposit(
     gridData,
     ant.x - moveX * 2,
     ant.y - moveY * 2,
     dropType,
-    CONFIG.DROPOFF_RATE
+    dropAmount
   );
 
   // Check food/nest collision
