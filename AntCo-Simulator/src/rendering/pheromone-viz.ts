@@ -34,29 +34,27 @@ export class PheromoneRenderer {
     const gw = CONFIG.GRID_WIDTH;
     const cs = CONFIG.CELL_SIZE;
 
-    // Map grid cell → pixel region
-    // For performance, compute once per cell, fill CS×CS block
     for (let gy = 0; gy < CONFIG.GRID_HEIGHT; gy++) {
       for (let gx = 0; gx < gw; gx++) {
         const gridIdx = gy * gw + gx;
-        const home = grid.home[gridIdx];
-        const food = grid.food[gridIdx];
 
-        // Color: green = home, blue = food
-        // Add slight brightness curve for visual pop
-        const g = Math.floor(Math.pow(home, 0.7) * 220);
-        const b = Math.floor(Math.pow(food, 0.7) * 200);
-        const a = Math.max(g, b) > 3 ? 180 : 0; // transparent when very low
+        // home = green trail (ants navigating back to nest leave this)
+        // food = blue trail (ants going out to find food leave this)
+        const homeVal = grid.home[gridIdx];
+        const foodVal = grid.food[gridIdx];
 
-        // Fill CS×CS pixel block
+        const g = Math.floor(Math.pow(homeVal, 0.7) * 220);
+        const b = Math.floor(Math.pow(foodVal, 0.7) * 200);
+        const a = Math.max(g, b) > 3 ? 180 : 0;
+
         for (let cy = 0; cy < cs; cy++) {
           const rowStart = ((gy * cs + cy) * gw * cs + gx * cs) * 4;
           for (let cx = 0; cx < cs; cx++) {
             const p = rowStart + cx * 4;
-            data[p] = 0;            // R
-            data[p + 1] = g;        // G (home)
-            data[p + 2] = b;        // B (food)
-            data[p + 3] = a;        // A
+            data[p] = 0;
+            data[p + 1] = g;
+            data[p + 2] = b;
+            data[p + 3] = a;
           }
         }
       }

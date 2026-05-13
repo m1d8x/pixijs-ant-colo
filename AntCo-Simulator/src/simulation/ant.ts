@@ -49,20 +49,26 @@ function decideDirection(ant: Ant, gridData: Grid, type: 'home' | 'food'): numbe
   const center = sensePheromone(ant, 0, gridData, type);
   const right = sensePheromone(ant, CONFIG.SENSOR_ANGLE, gridData, type);
 
-  const pow = (v: number) => Math.pow(v + 0.001, CONFIG.TRAIL_STRENGTH);
-  const l = pow(left);
-  const c = pow(center);
-  const r = pow(right);
+  // Boost: raise sensed values to power to amplify strong signals vs noise
+  const boost = CONFIG.TRAIL_STRENGTH;
+  const l = Math.pow(left + 0.001, boost);
+  const c = Math.pow(center + 0.001, boost);
+  const r = Math.pow(right + 0.001, boost);
 
-  const total = l + c + r + 0.0001;
-  const rand = (Math.random() - 0.5) * CONFIG.ANT_WANDER;
+  const total = l + c + r;
+  const noise = (Math.random() - 0.5) * CONFIG.ANT_WANDER;
+
+  // If trails are too weak, random spin instead of going straight
+  if (total < 0.001) {
+    return (Math.random() - 0.5) * CONFIG.ANT_SPIN;
+  }
 
   if (c >= l && c >= r) {
-    return rand; // continue straight
+    return noise; // continue straight + small wander
   } else if (l >= r) {
-    return -CONFIG.SENSOR_ANGLE * (c + r) / total + rand;
+    return -CONFIG.SENSOR_ANGLE * (l - r) / total + noise;
   } else {
-    return CONFIG.SENSOR_ANGLE * (c + l) / total + rand;
+    return CONFIG.SENSOR_ANGLE * (r - l) / total + noise;
   }
 }
 
@@ -76,12 +82,17 @@ export function updateAnt(
   deltaTime: number
 ): void {
   // Determine target pheromone (what to follow) and drop pheromone (what to leave)
+  // Foraging ants (no food): follow food trails (blue), drop home trails (green)
+  // Returning ants (hasFood): follow home trails (green), drop food trails (blue)
+  //
+  // Visual: green = "path to food" (blue trail dropped so others follow)
+  //         blue = "path to nest" (green trail dropped so ant navigates home)
   const targetType = ant.hasFood ? 'home' : 'food';
   const dropType = ant.hasFood ? 'food' : 'home';
 
   // Decision
   const turn = decideDirection(ant, gridData, targetType);
-  ant.angle += turn * 0.3; // scale turn rate
+  ant.angle += turn * 0.5; // scale turn rate (increased for more responsive turning)
 
   // Move
   const moveX = Math.cos(ant.angle) * ant.speed * deltaTime;
