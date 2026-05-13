@@ -20,7 +20,6 @@ export class PheromoneRenderer {
     this.imageData = this.ctx.createImageData(w, h);
     this.pixelData = this.imageData.data;
 
-    // Create texture from canvas
     const texture = Texture.from(this.canvas);
     this.sprite = new Sprite({ texture });
   }
@@ -36,16 +35,15 @@ export class PheromoneRenderer {
 
     for (let gy = 0; gy < CONFIG.GRID_HEIGHT; gy++) {
       for (let gx = 0; gx < gw; gx++) {
-        const gridIdx = gy * gw + gx;
+        const idx = gy * gw + gx;
+        const home = grid.home[idx];
+        const food = grid.food[idx];
 
-        // home = green trail (ants navigating back to nest leave this)
-        // food = blue trail (ants going out to find food leave this)
-        const homeVal = grid.home[gridIdx];
-        const foodVal = grid.food[gridIdx];
-
-        const g = Math.floor(Math.pow(homeVal, 0.7) * 220);
-        const b = Math.floor(Math.pow(foodVal, 0.7) * 200);
-        const a = Math.max(g, b) > 3 ? 180 : 0;
+        // Direct linear mapping — no power curve that kills low values
+        const g = Math.floor(home * 255);
+        const b = Math.floor(food * 255);
+        // Always visible if any pheromone present
+        const a = (home > 0.001 || food > 0.001) ? 200 : 0;
 
         for (let cy = 0; cy < cs; cy++) {
           const rowStart = ((gy * cs + cy) * gw * cs + gx * cs) * 4;

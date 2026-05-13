@@ -21,15 +21,16 @@ export const CONFIG = {
   SENSOR_DISTANCE: 15,
 
   // Pheromones
-  EVAPORATION_RATE_HOME: 0.985,   // Green evaporates fast (less noise)
-  EVAPORATION_RATE_FOOD: 0.997,    // Blue persists longer (navigation anchor)
-  DROPOFF_RATE_FORAGING: 0.1,    // Enough to see exploration paths
-  DROPOFF_RATE_RETURNING: 0.3,   // Strong trail for navigation
-  PHEROMONE_AMEPLIFICATION: 1.2, // Stacking bonus (1.2 = 20% boost per layer)
-  TRAIL_STRENGTH: 6,              // Stronger amplification of trail signals
+  EVAPORATION_RATE_HOME: 0.999,   // Green persists longer
+  EVAPORATION_RATE_FOOD: 0.999,    // Blue persists longer (navigation anchor)
+  DROPOFF_RATE_FORAGING: 0.06,    // Enough for visible trails
+  DROPOFF_RATE_RETURNING: 0.4,   // Strong return trail
+  PHEROMONE_AMPLIFICATION: 0.5,   // Stacking adds 50% of existing pheromone as bonus
+  TRAIL_STRENGTH: 4,              // Moderate amplification of trail signals
   MIN_PHEROMONE: 0.0,
   MAX_PHEROMONE: 1.0,
-  DIFFUSE_WEIGHT: 0.02,          // Minimal diffusion — keep trails sharp
+  DIFFUSE_WEIGHT: 0.01,          // Almost no diffusion — keep trails sharp
+  PHEROMONE_VIS_THRESHOLD: 0.02, // Only render above this value for cleaner look
 
   // Behavior
   NEST_RADIUS: 30,
