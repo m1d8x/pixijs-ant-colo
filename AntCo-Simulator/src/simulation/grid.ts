@@ -25,11 +25,11 @@ export function index(grid: Grid, gx: number, gy: number): number {
 
 export function evaporate(grid: Grid): void {
   for (let i = 0; i < grid.home.length; i++) {
-    // Green (home) evaporates fast — it's noise from wandering ants
+    // Green (home trail) persists — anchors the return path for food-carrying ants
     grid.home[i] *= CONFIG.EVAPORATION_RATE_HOME;
     if (grid.home[i] < CONFIG.MIN_PHEROMONE) grid.home[i] = CONFIG.MIN_PHEROMONE;
 
-    // Blue (food) persists longer — it's the navigation anchor
+    // Blue (food trail) decays faster — prevents saturation, keeps trails adaptive
     grid.food[i] *= CONFIG.EVAPORATION_RATE_FOOD;
     if (grid.food[i] < CONFIG.MIN_PHEROMONE) grid.food[i] = CONFIG.MIN_PHEROMONE;
   }

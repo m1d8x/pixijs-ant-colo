@@ -49,28 +49,25 @@ function decideDirection(ant: Ant, gridData: Grid, type: 'home' | 'food'): numbe
   const center = sensePheromone(ant, 0, gridData, type);
   const right = sensePheromone(ant, CONFIG.SENSOR_ANGLE, gridData, type);
 
-  // Amplify: raise to power to make strong signals dominant
-  const boost = CONFIG.TRAIL_STRENGTH;
-  const l = Math.pow(Math.max(left, 0.0001), boost);
-  const c = Math.pow(Math.max(center, 0.0001), boost);
-  const r = Math.pow(Math.max(right, 0.0001), boost);
-
-  const total = l + c + r;
   const noise = (Math.random() - 0.5) * CONFIG.ANT_WANDER;
 
-  // If no significant trail detected, random walk
-  if (total < 0.01) {
+  // Check raw readings before amplification — if no trail at all, random walk
+  if (left + center + right < CONFIG.MIN_PHEROMONE_DETECT) {
     return (Math.random() - 0.5) * CONFIG.ANT_SPIN * 2;
   }
 
-  // Strongest sensor wins — turn toward it proportionally
-  if (l >= c && l >= r) {
-    return -0.6 + noise;       // Strong left turn
-  } else if (r >= c && r >= l) {
-    return 0.6 + noise;        // Strong right turn
-  } else {
-    return noise * 0.5;        // Continue mostly straight
-  }
+  // Amplify signal differences (moderate exponent)
+  const boost = CONFIG.TRAIL_STRENGTH;
+  const l = Math.pow(left, boost);
+  const c = Math.pow(center, boost);
+  const r = Math.pow(right, boost);
+
+  // Proportional steering: weighted blend of all three sensors
+  // Center pulls straight, left/right pull the ant toward their direction
+  const steer = (-l + r) / (l + c + r);  // -1 (hard left) to +1 (hard right)
+  const turn = steer * CONFIG.ANT_SPIN + noise;
+
+  return turn;
 }
 
 export function updateAnt(

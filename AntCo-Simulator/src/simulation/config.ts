@@ -21,15 +21,16 @@ export const CONFIG = {
   SENSOR_DISTANCE: 15,
 
   // Pheromones
-  EVAPORATION_RATE_HOME: 0.999,   // Green persists longer
-  EVAPORATION_RATE_FOOD: 0.999,    // Blue persists longer (navigation anchor)
-  DROPOFF_RATE_FORAGING: 0.06,    // Enough for visible trails
-  DROPOFF_RATE_RETURNING: 0.4,   // Strong return trail
-  PHEROMONE_AMPLIFICATION: 0.5,   // Stacking adds 50% of existing pheromone as bonus
-  TRAIL_STRENGTH: 4,              // Moderate amplification of trail signals
+  EVAPORATION_RATE_HOME: 0.9995,  // Green (home trail) persists longer — anchors return path
+  EVAPORATION_RATE_FOOD: 0.99,    // Blue (food trail) decays faster to prevent map saturation
+  DROPOFF_RATE_FORAGING: 0.12,   // Foragers drop stronger green trails going out
+  DROPOFF_RATE_RETURNING: 0.3,   // Returners drop blue (reduced from 0.4 to balance)
+  PHEROMONE_AMPLIFICATION: 0.5,  // Stacking adds 50% of existing pheromone as bonus
+  TRAIL_STRENGTH: 1.5,           // Gentle amplification — ants can follow moderate trails
   MIN_PHEROMONE: 0.0,
   MAX_PHEROMONE: 1.0,
   DIFFUSE_WEIGHT: 0.01,          // Almost no diffusion — keep trails sharp
+  MIN_PHEROMONE_DETECT: 0.01,    // Raw trail sum below this → ant random-walks
   PHEROMONE_VIS_THRESHOLD: 0.02, // Only render above this value for cleaner look
 
   // Behavior
