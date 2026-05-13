@@ -10,23 +10,24 @@ export const CONFIG = {
   CELL_SIZE: 5,
 
   // Ants
-  ANT_COUNT: 150,
+  ANT_COUNT: 120,
   ANT_SPEED: 2.5,
   ANT_SIZE: 4,
   ANT_WANDER: 0.15,
-  ANT_SPIN: 0.45,
+  ANT_SPIN: 0.6,
 
   // Sensors
   SENSOR_ANGLE: 0.5,
   SENSOR_DISTANCE: 15,
 
   // Pheromones
-  EVAPORATION_RATE: 0.996,
-  DROPOFF_RATE: 0.3,
+  EVAPORATION_RATE: 0.992,    // Faster evaporation to clear noise
+  DROPOFF_RATE: 0.15,         // Lower drop rate - less background noise
   TRAIL_STRENGTH: 5,
   MIN_PHEROMONE: 0.0,
   MAX_PHEROMONE: 1.0,
-  DIFFUSE_WEIGHT: 0.08,
+  DIFFUSE_WEIGHT: 0.06,
+  PHEROMONE_VIS_THRESHOLD: 0.02,  // Only render above this
 
   // Behavior
   NEST_RADIUS: 30,
