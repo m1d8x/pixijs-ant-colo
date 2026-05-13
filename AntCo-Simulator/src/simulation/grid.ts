@@ -24,42 +24,48 @@ export function index(grid: Grid, gx: number, gy: number): number {
 }
 
 export function evaporate(grid: Grid): void {
-  const { home, food } = grid;
-  for (let i = 0; i < home.length; i++) {
-    home[i] *= CONFIG.EVAPORATION_RATE;
-    if (home[i] < CONFIG.MIN_PHEROMONE) home[i] = CONFIG.MIN_PHEROMONE;
+  for (let i = 0; i < grid.home.length; i++) {
+    // Green (home) evaporates fast — it's noise from wandering ants
+    grid.home[i] *= CONFIG.EVAPORATION_RATE_HOME;
+    if (grid.home[i] < CONFIG.MIN_PHEROMONE) grid.home[i] = CONFIG.MIN_PHEROMONE;
 
-    food[i] *= CONFIG.EVAPORATION_RATE;
-    if (food[i] < CONFIG.MIN_PHEROMONE) food[i] = CONFIG.MIN_PHEROMONE;
+    // Blue (food) persists longer — it's the navigation anchor
+    grid.food[i] *= CONFIG.EVAPORATION_RATE_FOOD;
+    if (grid.food[i] < CONFIG.MIN_PHEROMONE) grid.food[i] = CONFIG.MIN_PHEROMONE;
   }
 }
 
 export function diffuse(grid: Grid): void {
-  const { home, food, width, height } = grid;
   const w = CONFIG.DIFFUSE_WEIGHT;
+  const { home, food, width, height } = grid;
+
   // Diffuse home pheromones
   for (let y = 1; y < height - 1; y++) {
     for (let x = 1; x < width - 1; x++) {
       const idx = y * width + x;
-      const avg =
+      home[idx] =
         home[idx] * (1 - 4 * w) +
         (home[idx - 1] + home[idx + 1] + home[idx - width] + home[idx + width]) * w;
-      home[idx] = avg;
     }
   }
   // Diffuse food pheromones
   for (let y = 1; y < height - 1; y++) {
     for (let x = 1; x < width - 1; x++) {
       const idx = y * width + x;
-      const avg =
+      food[idx] =
         food[idx] * (1 - 4 * w) +
         (food[idx - 1] + food[idx + 1] + food[idx - width] + food[idx + width]) * w;
-      food[idx] = avg;
     }
   }
 }
 
-export function deposit(grid: Grid, px: number, py: number, type: 'home' | 'food', amount: number): void {
+export function deposit(
+  grid: Grid,
+  px: number,
+  py: number,
+  type: 'home' | 'food',
+  amount: number
+): void {
   const gx = Math.floor(px / CONFIG.CELL_SIZE);
   const gy = Math.floor(py / CONFIG.CELL_SIZE);
   if (gx < 0 || gx >= grid.width || gy < 0 || gy >= grid.height) return;
@@ -68,7 +74,12 @@ export function deposit(grid: Grid, px: number, py: number, type: 'home' | 'food
   buffer[idx] = Math.min(CONFIG.MAX_PHEROMONE, buffer[idx] + amount);
 }
 
-export function sample(grid: Grid, px: number, py: number, type: 'home' | 'food'): number {
+export function sample(
+  grid: Grid,
+  px: number,
+  py: number,
+  type: 'home' | 'food'
+): number {
   const gx = Math.floor(px / CONFIG.CELL_SIZE);
   const gy = Math.floor(py / CONFIG.CELL_SIZE);
   if (gx < 0 || gx >= grid.width || gy < 0 || gy >= grid.height) return 0;

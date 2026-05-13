@@ -21,18 +21,23 @@ export const CONFIG = {
   SENSOR_DISTANCE: 15,
 
   // Pheromones
-  EVAPORATION_RATE: 0.995,
-  DROPOFF_RATE_FORAGING: 0.08,  // Enough to see exploration paths
-  DROPOFF_RATE_RETURNING: 0.4,  // Strong trail for navigation
-  TRAIL_STRENGTH: 5,
+  EVAPORATION_RATE_HOME: 0.985,   // Green evaporates fast (less noise)
+  EVAPORATION_RATE_FOOD: 0.997,    // Blue persists longer (navigation anchor)
+  DROPOFF_RATE_FORAGING: 0.1,    // Enough to see exploration paths
+  DROPOFF_RATE_RETURNING: 0.3,   // Strong trail for navigation
+  TRAIL_STRENGTH: 6,              // Stronger amplification of trail signals
   MIN_PHEROMONE: 0.0,
   MAX_PHEROMONE: 1.0,
-  DIFFUSE_WEIGHT: 0.06,
+  DIFFUSE_WEIGHT: 0.02,          // Minimal diffusion — keep trails sharp
 
   // Behavior
   NEST_RADIUS: 30,
   FOOD_RADIUS: 25,
 
+  // SIGHT
+  SIGHT_RADIUS_FORAGING: 80,   // How far ants can "see" food
+  SIGHT_RADIUS_RETURNING: 100, // How far ants can "see" nest (longer since they need to find it)
+  
   // Ticker
   LOGIC_UPDATES_PER_SECOND: 30,
 };

@@ -49,34 +49,28 @@ function decideDirection(ant: Ant, gridData: Grid, type: 'home' | 'food'): numbe
   const center = sensePheromone(ant, 0, gridData, type);
   const right = sensePheromone(ant, CONFIG.SENSOR_ANGLE, gridData, type);
 
-  // Boost: raise sensed values to power to amplify strong signals vs noise
+  // Amplify: raise to power to make strong signals dominant
   const boost = CONFIG.TRAIL_STRENGTH;
-  const l = Math.pow(left + 0.0001, boost);
-  const c = Math.pow(center + 0.0001, boost);
-  const r = Math.pow(right + 0.0001, boost);
+  const l = Math.pow(Math.max(left, 0.0001), boost);
+  const c = Math.pow(Math.max(center, 0.0001), boost);
+  const r = Math.pow(Math.max(right, 0.0001), boost);
 
   const total = l + c + r;
   const noise = (Math.random() - 0.5) * CONFIG.ANT_WANDER;
 
-  // If no significant trail, strong random walk
-  if (total < 0.001) {
+  // If no significant trail detected, random walk
+  if (total < 0.01) {
     return (Math.random() - 0.5) * CONFIG.ANT_SPIN * 2;
   }
 
-  // Weighted turn toward strongest signal
-  const maxVal = Math.max(l, c, r);
-
-  // If center is strongest, continue with small wander
-  if (Math.abs(c - maxVal) < 0.0001) {
-    return noise;
+  // Strongest sensor wins — turn toward it proportionally
+  if (l >= c && l >= r) {
+    return -0.6 + noise;       // Strong left turn
+  } else if (r >= c && r >= l) {
+    return 0.6 + noise;        // Strong right turn
+  } else {
+    return noise * 0.5;        // Continue mostly straight
   }
-
-  // Left or right stronger - turn proportionally
-  const diff = maxVal - (l === maxVal ? r : l);
-  const proportion = diff / (total + 0.001);
-
-  const direction = r > l ? 1 : -1;
-  return direction * CONFIG.SENSOR_ANGLE * proportion + noise;
 }
 
 export function updateAnt(
@@ -88,18 +82,59 @@ export function updateAnt(
   foodY: number,
   deltaTime: number
 ): void {
-  // Determine target pheromone (what to follow) and drop pheromone (what to leave)
-  // Foraging ants (no food): follow food trails (blue), drop home trails (green)
-  // Returning ants (hasFood): follow home trails (green), drop food trails (blue)
-  //
-  // Visual: green = "path to food" (blue trail dropped so others follow)
-  //         blue = "path to nest" (green trail dropped so ant navigates home)
+  // ── SIGHT: direct navigation when close to objective ──
+  if (!ant.hasFood) {
+    const dx = ant.x - foodX;
+    const dy = ant.y - foodY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < CONFIG.SIGHT_RADIUS_FORAGING) {
+      // Can see food — steer directly toward it
+      ant.angle = Math.atan2(foodY - ant.y, foodX - ant.x) + (Math.random() - 0.5) * 0.1;
+      // Move
+      const moveX = Math.cos(ant.angle) * ant.speed * deltaTime;
+      const moveY = Math.sin(ant.angle) * ant.speed * deltaTime;
+      ant.x += moveX;
+      ant.y += moveY;
+      grid.deposit(gridData, ant.x - moveX * 2, ant.y - moveY * 2, 'home', CONFIG.DROPOFF_RATE_FORAGING);
+
+      // Pickup food on contact
+      if (dx * dx + dy * dy < CONFIG.FOOD_RADIUS * CONFIG.FOOD_RADIUS) {
+        ant.hasFood = true;
+        ant.angle += Math.PI + (Math.random() - 0.5) * 0.5;
+      }
+      return; // skip trail logic this frame
+    }
+  } else {
+    const dx = ant.x - nestX;
+    const dy = ant.y - nestY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < CONFIG.SIGHT_RADIUS_RETURNING) {
+      // Can see nest — steer directly toward it
+      ant.angle = Math.atan2(nestY - ant.y, nestX - ant.x) + (Math.random() - 0.5) * 0.1;
+      // Move
+      const moveX = Math.cos(ant.angle) * ant.speed * deltaTime;
+      const moveY = Math.sin(ant.angle) * ant.speed * deltaTime;
+      ant.x += moveX;
+      ant.y += moveY;
+      grid.deposit(gridData, ant.x - moveX * 2, ant.y - moveY * 2, 'food', CONFIG.DROPOFF_RATE_RETURNING);
+
+      // Drop food at nest
+      if (dx * dx + dy * dy < CONFIG.NEST_RADIUS * CONFIG.NEST_RADIUS) {
+        ant.hasFood = false;
+        ant.angle += Math.PI + (Math.random() - 0.5) * 0.5;
+      }
+      return; // skip trail logic this frame
+    }
+  }
+
+  // ── PHEROMONE TRAIL following ──
+  // Foraging: follows food trails (blue), drops home trails (green)
+  // Returning: follows home trails (green), drops food trails (blue)
   const targetType = ant.hasFood ? 'home' : 'food';
   const dropType = ant.hasFood ? 'food' : 'home';
 
-  // Decision
   const turn = decideDirection(ant, gridData, targetType);
-  ant.angle += turn * 0.5; // scale turn rate (increased for more responsive turning)
+  ant.angle += turn * 0.8;
 
   // Move
   const moveX = Math.cos(ant.angle) * ant.speed * deltaTime;
@@ -108,8 +143,6 @@ export function updateAnt(
   ant.y += moveY;
 
   // Drop pheromone behind ant
-  // Returning ants leave strong trails, foraging ants barely drop anything
-  // (random wandering trails just create noise and confusion)
   const dropAmount = ant.hasFood
     ? CONFIG.DROPOFF_RATE_RETURNING
     : CONFIG.DROPOFF_RATE_FORAGING;
@@ -121,23 +154,20 @@ export function updateAnt(
     dropAmount
   );
 
-  // Check food/nest collision
+  // Check food/nest collision (fallback if sight didn't catch it)
   if (!ant.hasFood) {
     const dx = ant.x - foodX;
     const dy = ant.y - foodY;
     if (dx * dx + dy * dy < CONFIG.FOOD_RADIUS * CONFIG.FOOD_RADIUS) {
       ant.hasFood = true;
-      ant.angle += Math.PI; // turn around
-      // Add some random deviation
-      ant.angle += (Math.random() - 0.5) * 0.5;
+      ant.angle += Math.PI + (Math.random() - 0.5) * 0.5;
     }
   } else {
     const dx = ant.x - nestX;
     const dy = ant.y - nestY;
     if (dx * dx + dy * dy < CONFIG.NEST_RADIUS * CONFIG.NEST_RADIUS) {
       ant.hasFood = false;
-      ant.angle += Math.PI;
-      ant.angle += (Math.random() - 0.5) * 0.5;
+      ant.angle += Math.PI + (Math.random() - 0.5) * 0.5;
     }
   }
 
