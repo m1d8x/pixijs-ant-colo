@@ -51,25 +51,32 @@ function decideDirection(ant: Ant, gridData: Grid, type: 'home' | 'food'): numbe
 
   // Boost: raise sensed values to power to amplify strong signals vs noise
   const boost = CONFIG.TRAIL_STRENGTH;
-  const l = Math.pow(left + 0.001, boost);
-  const c = Math.pow(center + 0.001, boost);
-  const r = Math.pow(right + 0.001, boost);
+  const l = Math.pow(left + 0.0001, boost);
+  const c = Math.pow(center + 0.0001, boost);
+  const r = Math.pow(right + 0.0001, boost);
 
   const total = l + c + r;
   const noise = (Math.random() - 0.5) * CONFIG.ANT_WANDER;
 
-  // If trails are too weak, random spin instead of going straight
+  // If no significant trail, strong random walk
   if (total < 0.001) {
-    return (Math.random() - 0.5) * CONFIG.ANT_SPIN;
+    return (Math.random() - 0.5) * CONFIG.ANT_SPIN * 2;
   }
 
-  if (c >= l && c >= r) {
-    return noise; // continue straight + small wander
-  } else if (l >= r) {
-    return -CONFIG.SENSOR_ANGLE * (l - r) / total + noise;
-  } else {
-    return CONFIG.SENSOR_ANGLE * (r - l) / total + noise;
+  // Weighted turn toward strongest signal
+  const maxVal = Math.max(l, c, r);
+
+  // If center is strongest, continue with small wander
+  if (Math.abs(c - maxVal) < 0.0001) {
+    return noise;
   }
+
+  // Left or right stronger - turn proportionally
+  const diff = maxVal - (l === maxVal ? r : l);
+  const proportion = diff / (total + 0.001);
+
+  const direction = r > l ? 1 : -1;
+  return direction * CONFIG.SENSOR_ANGLE * proportion + noise;
 }
 
 export function updateAnt(
